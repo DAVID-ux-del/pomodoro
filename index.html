@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🍅 美乐蒂番茄钟</title>
+<title>🍅 Pomodoro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -578,7 +578,7 @@
 <div class="auth-overlay" id="authOverlay">
   <div class="auth-box pixel-border">
     <div class="auth-title">
-      <span class="sparkle">✦</span> MY MELODY <span class="sparkle">✦</span><br>
+      <span class="sparkle">✦</span> POMODORO <span class="sparkle">✦</span><br>
       <span class="heart">♥</span> POMODORO <span class="heart">♥</span>
     </div>
     <div class="auth-subtitle" id="authSubtitle">登录以开始</div>
@@ -600,7 +600,7 @@
 
   <!-- Title -->
   <div class="title">
-    <span class="sparkle">✦</span> MY MELODY <span class="sparkle">✦</span><br>
+    <span class="sparkle">✦</span> POMODORO <span class="sparkle">✦</span><br>
     <span class="heart">♥</span> POMODORO TIMER <span class="heart">♥</span>
   </div>
 
@@ -928,7 +928,7 @@ async function tick() {
       state.sessions++;
       state.totalMinutes += state.settings.work;
       state.workSessions++;
-      notify('♥ 番茄完成！休息一下吧 ♥');
+      notify('♥ Pomodoro complete! Take a break ♥');
       // Send session to backend (fire and forget)
       api('/api/sessions', {
         method: 'POST',
@@ -1006,7 +1006,7 @@ skipBtn.addEventListener('click', () => {
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
     if (state.status === 'running') {
-      if (!confirm('当前有正在进行的番茄，切换模式将中断它，确定吗？')) return;
+      if (!confirm('A session is in progress. Switching mode will interrupt it. Continue?')) return;
     }
     switchMode(tab.dataset.mode);
   });

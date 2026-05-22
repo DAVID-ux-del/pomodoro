@@ -1,4 +1,4 @@
-# 美乐蒂番茄钟
+# Pomodoro Timer
 
 ## 收款码设置
 

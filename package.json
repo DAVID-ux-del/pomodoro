@@ -2,7 +2,7 @@
   "name": "pomodoro",
   "version": "1.0.0",
   "private": true,
-  "description": "美乐蒂番茄钟 with backend & admin panel",
+  "description": "Pomodoro Timer with user system, membership & admin panel",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js"

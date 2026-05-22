@@ -1,0 +1,4 @@
+node_modules/
+pomodoro.db
+*.db
+.env
