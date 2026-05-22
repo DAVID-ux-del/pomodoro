@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍅 美乐蒂番茄钟</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --pink-light: #FFF0F5;
+    --pink: #FFB6C1;
+    --pink-med: #FF91A4;
+    --pink-dark: #E8708A;
+    --pink-deep: #D4506C;
+    --rose: #C9405C;
+    --white: #FFF5F7;
+    --heart: #FF6B8A;
+    --shadow: rgba(200, 80, 110, 0.2);
+    --pixel: 4px;
+  }
+
+  body {
+    font-family: 'Press Start 2P', monospace;
+    background: var(--pink-light);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,182,193,.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(255,105,135,.1) 0%, transparent 50%);
+    padding: 16px;
+  }
+
+  /* ── pixel border mixin ── */
+  .pixel-border {
+    border: var(--pixel) solid var(--pink-deep);
+    box-shadow:
+      inset calc(var(--pixel) * -1) calc(var(--pixel) * -1) 0 0 rgba(200, 80, 110, .15),
+      inset var(--pixel) var(--pixel) 0 0 rgba(255, 255, 255, .5),
+      calc(var(--pixel) * 2) calc(var(--pixel) * 2) 0 0 var(--shadow);
+  }
+
+  /* ── container ── */
+  .container {
+    text-align: center;
+    padding: 32px 28px 28px;
+    width: 100%;
+    max-width: 420px;
+    background: var(--white);
+    border-radius: 0;
+    position: relative;
+    image-rendering: pixelated;
+  }
+  .container.pixel-border {
+    border-width: var(--pixel);
+  }
+
+  /* ── bunny ears decoration ── */
+  .ears {
+    position: absolute;
+    top: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 24px;
+    pointer-events: none;
+  }
+  .ear {
+    width: 32px;
+    height: 36px;
+    background: var(--pink-med);
+    border: var(--pixel) solid var(--pink-deep);
+    border-radius: 50% 50% 0 0;
+    position: relative;
+  }
+  .ear::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 18px;
+    background: var(--pink);
+    border-radius: 50% 50% 0 0;
+    border: 2px solid var(--pink-dark);
+  }
+
+  /* ── title ── */
+  .title {
+    font-size: 11px;
+    color: var(--pink-deep);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    line-height: 1.8;
+  }
+  .title .heart {
+    color: var(--heart);
+    font-size: 18px;
+  }
+  .title .sparkle {
+    color: var(--pink-med);
+    font-size: 16px;
+  }
+
+  /* ── pixel flower decoration ── */
+  .deco-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 18px;
+    color: var(--pink-med);
+    letter-spacing: 4px;
+  }
+
+  /* ── mode tabs ── */
+  .mode-tabs {
+    display: flex;
+    gap: var(--pixel);
+    background: var(--pink);
+    padding: var(--pixel);
+    margin-bottom: 24px;
+    border: var(--pixel) solid var(--pink-dark);
+  }
+  .mode-tab {
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    background: var(--white);
+    color: var(--pink-dark);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all .15s;
+    image-rendering: pixelated;
+  }
+  .mode-tab.active {
+    background: var(--pink-deep);
+    color: #fff;
+    box-shadow: inset calc(var(--pixel) * -1) calc(var(--pixel) * -1) 0 0 rgba(0,0,0,.1),
+                inset var(--pixel) var(--pixel) 0 0 rgba(255,255,255,.2);
+  }
+  .mode-tab:hover:not(.active) {
+    background: var(--pink);
+  }
+
+  /* ── timer ring ── */
+  .timer-wrapper {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    margin: 0 auto 24px;
+  }
+  .timer-ring {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 6px rgba(255, 105, 135, .15));
+  }
+  .timer-ring .bg-circle {
+    fill: none;
+    stroke: var(--pink);
+    stroke-width: 8;
+  }
+  .timer-ring .progress-circle {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: square;
+    transition: stroke-dashoffset .3s ease;
+  }
+  body.mode-work .timer-ring .progress-circle { stroke: var(--pink-deep); }
+  body.mode-break .timer-ring .progress-circle { stroke: #F0A8A8; }
+  body.mode-long .timer-ring .progress-circle { stroke: #C8A8D0; }
+
+  .timer-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .timer-display {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 32px;
+    color: var(--pink-deep);
+    letter-spacing: 2px;
+    line-height: 1;
+    text-shadow: 3px 3px 0 var(--shadow);
+  }
+  .timer-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    color: var(--pink-dark);
+    margin-top: 12px;
+    letter-spacing: 1px;
+  }
+
+  /* ── controls ── */
+  .controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .btn {
+    border: var(--pixel) solid var(--pink-dark);
+    background: var(--white);
+    font-family: 'Press Start 2P', monospace;
+    color: var(--pink-deep);
+    width: 52px;
+    height: 52px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all .1s;
+    box-shadow:
+      inset calc(var(--pixel) * -1) calc(var(--pixel) * -1) 0 0 rgba(200, 80, 110, .15),
+      inset var(--pixel) var(--pixel) 0 0 rgba(255, 255, 255, .6),
+      calc(var(--pixel) * 2) calc(var(--pixel) * 2) 0 0 var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    image-rendering: pixelated;
+  }
+  .btn:hover {
+    background: var(--pink);
+    transform: translate(1px, 1px);
+    box-shadow:
+      inset calc(var(--pixel) * -1) calc(var(--pixel) * -1) 0 0 rgba(200, 80, 110, .1),
+      inset var(--pixel) var(--pixel) 0 0 rgba(255, 255, 255, .4),
+      var(--pixel) var(--pixel) 0 0 var(--shadow);
+  }
+  .btn:active {
+    transform: translate(3px, 3px);
+    box-shadow: none;
+  }
+  .btn-primary {
+    width: 64px;
+    height: 64px;
+    font-size: 20px;
+    background: var(--pink-deep);
+    color: #fff;
+    border-color: var(--rose);
+    box-shadow:
+      inset calc(var(--pixel) * -1) calc(var(--pixel) * -1) 0 0 rgba(0,0,0,.15),
+      inset var(--pixel) var(--pixel) 0 0 rgba(255,255,255,.3),
+      calc(var(--pixel) * 2) calc(var(--pixel) * 2) 0 0 var(--shadow);
+  }
+  .btn-primary:hover {
+    background: var(--rose);
+    color: #fff;
+  }
+  .btn-primary:active {
+    box-shadow: none;
+  }
+
+  /* ── session info ── */
+  .session-info {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 24px;
+  }
+  .session-item {
+    text-align: center;
+  }
+  .session-item .num {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 18px;
+    color: var(--pink-deep);
+    text-shadow: 2px 2px 0 var(--shadow);
+  }
+  .session-item .lbl {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--pink-dark);
+    margin-top: 6px;
+  }
+
+  /* ── settings ── */
+  .settings-toggle {
+    border: var(--pixel) solid var(--pink-dark);
+    background: var(--white);
+    font-family: 'Press Start 2P', monospace;
+    color: var(--pink-dark);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 8px 16px;
+    transition: all .15s;
+    box-shadow:
+      inset calc(var(--pixel) * -1) calc(var(--pixel) * -1) 0 0 rgba(200, 80, 110, .1),
+      inset var(--pixel) var(--pixel) 0 0 rgba(255,255,255,.5),
+      calc(var(--pixel) * 2) calc(var(--pixel) * 2) 0 0 var(--shadow);
+  }
+  .settings-toggle:hover {
+    background: var(--pink);
+  }
+
+  .settings-panel {
+    display: none;
+    margin-top: 16px;
+    padding: 20px 16px 16px;
+    background: var(--white);
+  }
+  .settings-panel.open { display: block; }
+  .settings-panel.pixel-border {
+    border-width: var(--pixel);
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .settings-row:last-child { margin-bottom: 0; }
+  .settings-row label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--pink-dark);
+    text-align: left;
+  }
+  .settings-row input {
+    width: 64px;
+    padding: 6px 8px;
+    border: var(--pixel) solid var(--pink-dark);
+    background: #fff;
+    font-family: 'Press Start 2P', monospace;
+    color: var(--pink-deep);
+    font-size: 18px;
+    text-align: center;
+    outline: none;
+  }
+  .settings-row input:focus {
+    background: var(--pink-light);
+  }
+
+  /* ── notification ── */
+  .notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-120px);
+    background: var(--white);
+    padding: 16px 24px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    color: var(--pink-deep);
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+    z-index: 100;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .notification.show { transform: translateX(-50%) translateY(0); }
+  .notification.pixel-border {
+    border-width: var(--pixel);
+  }
+
+  /* ── footer ── */
+  .footer-deco {
+    margin-top: 16px;
+    font-size: 16px;
+    color: var(--pink);
+    letter-spacing: 6px;
+  }
+  /* ── login overlay ── */
+  .auth-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(200,80,110,.3);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  .auth-overlay.hidden { display: none; }
+  .auth-box {
+    background: var(--white);
+    padding: 32px 24px 24px;
+    width: 320px;
+    text-align: center;
+  }
+  .auth-box .auth-title {
+    font-size: 18px;
+    color: var(--pink-deep);
+    margin-bottom: 6px;
+    line-height: 1.8;
+  }
+  .auth-box .auth-subtitle {
+    font-size: 11px;
+    color: var(--pink-dark);
+    margin-bottom: 20px;
+  }
+  .auth-box input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: var(--pixel) solid var(--pink-dark);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    color: var(--pink-deep);
+    background: #fff;
+    text-align: center;
+    outline: none;
+  }
+  .auth-box input:focus { background: var(--pink-light); }
+  .auth-box .auth-btn {
+    width: 100%;
+    padding: 12px;
+    border: var(--pixel) solid var(--pink-dark);
+    background: var(--pink-deep);
+    color: #fff;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .auth-box .auth-btn:hover { background: var(--rose); }
+  .auth-box .auth-error {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--heart);
+    margin-bottom: 8px;
+    min-height: 18px;
+  }
+  .auth-box .auth-switch {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--pink-dark);
+    margin-top: 14px;
+    cursor: pointer;
+  }
+  .auth-box .auth-switch:hover { color: var(--pink-deep); }
+
+  /* ── user bar ── */
+  .user-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--pink-dark);
+  }
+  .user-bar .username { color: var(--pink-deep); }
+  .user-bar .link-btn {
+    border: none;
+    background: none;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--pink-dark);
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+  }
+  .user-bar .link-btn:hover { color: var(--pink-deep); }
+
+  /* ── subscription banner ── */
+  .sub-banner {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    padding: 10px;
+    margin-bottom: 16px;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .sub-banner.trial {
+    background: var(--pink-light);
+    color: var(--pink-dark);
+    border: var(--pixel) solid var(--pink);
+  }
+  .sub-banner.premium {
+    background: #FFF0F5;
+    color: var(--rose);
+    border: var(--pixel) solid var(--pink-med);
+  }
+  .sub-banner.expired {
+    background: #FFF0F0;
+    color: var(--heart);
+    border: var(--pixel) solid var(--heart);
+  }
+  .sub-banner .upgrade-link {
+    color: var(--pink-deep);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .sub-banner .upgrade-link:hover { color: var(--rose); }
+
+  /* ── paywall overlay ── */
+  .paywall-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(200,80,110,.4);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+  }
+  .paywall-overlay.hidden { display: none; }
+  .paywall-box {
+    background: var(--white);
+    padding: 32px 24px 24px;
+    width: 340px;
+    text-align: center;
+    max-width: 90vw;
+  }
+  .paywall-box .pw-title {
+    font-size: 18px;
+    color: var(--pink-deep);
+    margin-bottom: 8px;
+    line-height: 1.8;
+  }
+  .paywall-box .pw-sub {
+    font-size: 11px;
+    color: var(--pink-dark);
+    margin-bottom: 20px;
+    line-height: 1.8;
+  }
+  .paywall-box .pw-price {
+    font-size: 28px;
+    color: var(--pink-deep);
+    margin-bottom: 4px;
+    text-shadow: 2px 2px 0 var(--shadow);
+  }
+  .paywall-box .pw-price-label {
+    font-size: 11px;
+    color: var(--pink-dark);
+    margin-bottom: 24px;
+  }
+  .paywall-box .pw-btn {
+    width: 100%;
+    padding: 14px;
+    border: var(--pixel) solid var(--pink-dark);
+    background: var(--pink-deep);
+    color: #fff;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background .15s;
+  }
+  .paywall-box .pw-btn:hover { background: var(--rose); }
+  .paywall-box .pw-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .paywall-box .pw-features {
+    text-align: left;
+    margin: 20px 0 12px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--pink-dark);
+    line-height: 2.2;
+  }
+  .paywall-box .pw-features span { color: var(--pink-deep); }
+  .paywall-box .pw-back {
+    display: inline-block;
+    margin-top: 14px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: var(--pink-dark);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .paywall-box .pw-back:hover { color: var(--pink-deep); }
+</style>
+</head>
+<body class="mode-work">
+
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box pixel-border">
+    <div class="auth-title">
+      <span class="sparkle">✦</span> MY MELODY <span class="sparkle">✦</span><br>
+      <span class="heart">♥</span> POMODORO <span class="heart">♥</span>
+    </div>
+    <div class="auth-subtitle" id="authSubtitle">登录以开始</div>
+    <div class="auth-error" id="authError"></div>
+    <input type="text" id="authUsername" placeholder="用户名" autocomplete="username">
+    <input type="password" id="authPassword" placeholder="密码" autocomplete="current-password">
+    <button class="auth-btn" id="authBtn">登 录</button>
+    <div class="auth-switch" id="authSwitch">没有账号？注册一个</div>
+  </div>
+</div>
+
+<div class="container pixel-border">
+
+  <!-- Bunny ears -->
+  <div class="ears">
+    <div class="ear"></div>
+    <div class="ear"></div>
+  </div>
+
+  <!-- Title -->
+  <div class="title">
+    <span class="sparkle">✦</span> MY MELODY <span class="sparkle">✦</span><br>
+    <span class="heart">♥</span> POMODORO TIMER <span class="heart">♥</span>
+  </div>
+
+  <!-- Pixel flower deco -->
+  <div class="deco-row">✿  ❀  ✿  ❀  ✿</div>
+
+  <!-- Mode tabs -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="work">专注</button>
+    <button class="mode-tab" data-mode="break">短休</button>
+    <button class="mode-tab" data-mode="long">长休</button>
+  </div>
+
+  <!-- Subscription banner -->
+  <div class="sub-banner trial" id="subBanner" style="display:none"></div>
+
+  <!-- Timer -->
+  <div class="timer-wrapper">
+    <svg class="timer-ring" viewBox="0 0 200 200">
+      <circle class="bg-circle" cx="100" cy="100" r="86"/>
+      <circle class="progress-circle" cx="100" cy="100" r="86"
+        stroke-dasharray="540.35" stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-center">
+      <div class="timer-display" id="display">25:00</div>
+      <div class="timer-label" id="statusLabel">准备开始 ♪</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn" id="resetBtn" title="重置">↺</button>
+    <button class="btn btn-primary" id="mainBtn" title="开始">▶</button>
+    <button class="btn" id="skipBtn" title="跳过">⏭</button>
+  </div>
+
+  <!-- Session counter -->
+  <div class="session-info">
+    <div class="session-item">
+      <div class="num" id="sessionCount">0</div>
+      <div class="lbl">♥ 完成</div>
+    </div>
+    <div class="session-item">
+      <div class="num" id="totalMin">0</div>
+      <div class="lbl">✦ 分钟</div>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <button class="settings-toggle" id="settingsToggle">⚙ 设置</button>
+  <div class="settings-panel pixel-border" id="settingsPanel">
+    <div class="settings-row">
+      <label>专注（分）</label>
+      <input type="number" id="workTime" value="25" min="1" max="120">
+    </div>
+    <div class="settings-row">
+      <label>短休（分）</label>
+      <input type="number" id="breakTime" value="5" min="1" max="60">
+    </div>
+    <div class="settings-row">
+      <label>长休（分）</label>
+      <input type="number" id="longBreakTime" value="15" min="1" max="120">
+    </div>
+    <div class="settings-row">
+      <label>长休间隔</label>
+      <input type="number" id="longBreakInterval" value="4" min="1" max="10">
+    </div>
+  </div>
+
+  <!-- Footer deco -->
+  <div class="footer-deco">♡ ◇ ♡ ◇ ♡</div>
+
+  <!-- User bar -->
+  <div class="user-bar" id="userBar">
+    <span>♥ <span class="username" id="userName"></span></span>
+    <button class="link-btn" id="adminLink" style="display:none">管理后台</button>
+    <button class="link-btn" id="upgradeLink" style="display:none">升级会员</button>
+    <button class="link-btn" id="logoutBtn">退出</button>
+  </div>
+</div>
+
+<!-- Paywall overlay -->
+<div class="paywall-overlay hidden" id="paywallOverlay">
+  <div class="paywall-box pixel-border">
+    <div class="pw-title">♥ 升级会员 ♥</div>
+    <div class="pw-sub">月费 $20 · 扫码付款后确认开通</div>
+    <div class="pw-price">$20</div>
+    <div class="pw-price-label">月费会员 · 无限使用</div>
+
+    <!-- QR codes -->
+    <div style="display:flex;gap:12px;justify-content:center;margin:16px 0">
+      <div style="text-align:center">
+        <div style="width:110px;height:110px;background:var(--pink-light);border:var(--pixel) solid var(--pink);display:flex;align-items:center;justify-content:center;font-size:7px;color:var(--pink-dark);margin:0 auto" id="qrcodeAlipay">
+          请放入<br>支付宝<br>收款码
+          <br><span style="font-size:10px">qrcode-alipay.png</span>
+        </div>
+        <div style="font-size:10px;color:var(--pink-dark);margin-top:6px">支付宝</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:110px;height:110px;background:var(--pink-light);border:var(--pixel) solid var(--pink);display:flex;align-items:center;justify-content:center;font-size:7px;color:var(--pink-dark);margin:0 auto" id="qrcodeWechat">
+          请放入<br>微信<br>收款码
+          <br><span style="font-size:10px">qrcode-wechat.png</span>
+        </div>
+        <div style="font-size:10px;color:var(--pink-dark);margin-top:6px">微信</div>
+      </div>
+    </div>
+
+    <!-- Payment confirmation form -->
+    <input type="text" id="paymentNote" placeholder="付款备注（如您的用户名）"
+      style="width:100%;padding:10px;margin-bottom:10px;border:var(--pixel) solid var(--pink-dark);font-family:'Press Start 2P',monospace;font-size:7px;color:var(--pink-deep);background:#fff;text-align:center;outline:none">
+    <div id="paymentStatus" style="font-size:7px;color:var(--pink-dark);margin-bottom:8px;min-height:18px"></div>
+    <button class="pw-btn" id="confirmPaymentBtn">✓ 已付款，申请开通</button>
+    <div class="pw-features" style="margin-top:16px;text-align:center;font-size:10px;color:var(--pink-dark);line-height:1.8">
+      付款后请填写备注并点击上方按钮<br>管理员确认后即可开通会员
+    </div>
+    <div class="pw-back" id="paywallBack">稍后再说</div>
+  </div>
+</div>
+
+<!-- Notification -->
+<div class="notification pixel-border" id="notification"></div>
+
+<script>
+const CIRCUMFERENCE = 2 * Math.PI * 86;
+
+// ── Auth state ──
+let token = localStorage.getItem('token');
+let currentUser = null;
+
+// ── API helper with JWT ──
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...opts.headers };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(path, { ...opts, headers });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '请求失败');
+  return data;
+}
+
+// ── Auth UI ──
+const authOverlay = document.getElementById('authOverlay');
+const authUsername = document.getElementById('authUsername');
+const authPassword = document.getElementById('authPassword');
+const authBtn = document.getElementById('authBtn');
+const authError = document.getElementById('authError');
+const authSubtitle = document.getElementById('authSubtitle');
+const authSwitch = document.getElementById('authSwitch');
+const userName = document.getElementById('userName');
+const adminLink = document.getElementById('adminLink');
+const logoutBtn = document.getElementById('logoutBtn');
+const upgradeLink = document.getElementById('upgradeLink');
+
+// ── Subscription UI ──
+const subBanner = document.getElementById('subBanner');
+const paywallOverlay = document.getElementById('paywallOverlay');
+const paywallBack = document.getElementById('paywallBack');
+let subInfo = null;
+
+let isLogin = true;
+
+function showAuthError(msg) { authError.textContent = msg; }
+function clearAuthError() { authError.textContent = ''; }
+
+authSwitch.addEventListener('click', () => {
+  isLogin = !isLogin;
+  authSubtitle.textContent = isLogin ? '登录以开始' : '注册新账号';
+  authBtn.textContent = isLogin ? '登 录' : '注 册';
+  authSwitch.textContent = isLogin ? '没有账号？注册一个' : '已有账号？去登录';
+  clearAuthError();
+});
+
+authBtn.addEventListener('click', async () => {
+  const username = authUsername.value.trim();
+  const password = authPassword.value.trim();
+  if (!username || !password) { showAuthError('请填写用户名和密码'); return; }
+
+  authBtn.disabled = true;
+  authBtn.textContent = isLogin ? '登录中...' : '注册中...';
+  clearAuthError();
+
+  try {
+    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+    const data = await api(endpoint, {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('token', token);
+    authOverlay.classList.add('hidden');
+    await onLogin();
+    // Delay paywall so user sees the app briefly before upgrade prompt
+    if (currentUser.subscription && currentUser.subscription.status !== 'active') {
+      setTimeout(() => checkSubscription(true), 500);
+    } else {
+      checkSubscription(true);
+    }
+  } catch (e) {
+    showAuthError(e.message);
+  } finally {
+    authBtn.disabled = false;
+    authBtn.textContent = isLogin ? '登 录' : '注 册';
+  }
+});
+
+logoutBtn.addEventListener('click', () => {
+  token = null;
+  currentUser = null;
+  localStorage.removeItem('token');
+  authOverlay.classList.remove('hidden');
+  authUsername.value = '';
+  authPassword.value = '';
+  clearAuthError();
+});
+
+adminLink.addEventListener('click', () => {
+  window.open('/admin.html', '_blank');
+});
+
+// ── Timer state ──
+const state = {
+  mode: 'work',
+  status: 'idle',
+  timeLeft: 25 * 60,
+  total: 25 * 60,
+  sessions: 0,
+  totalMinutes: 0,
+  workSessions: 0,
+  timerId: null,
+  settings: { work: 25, break: 5, longBreak: 15, longBreakInterval: 4 },
+};
+
+const display = document.getElementById('display');
+const statusLabel = document.getElementById('statusLabel');
+const mainBtn = document.getElementById('mainBtn');
+const resetBtn = document.getElementById('resetBtn');
+const skipBtn = document.getElementById('skipBtn');
+const sessionCount = document.getElementById('sessionCount');
+const totalMin = document.getElementById('totalMin');
+const progressCircle = document.querySelector('.progress-circle');
+const tabs = document.querySelectorAll('.mode-tab');
+const settingsToggle = document.getElementById('settingsToggle');
+const settingsPanel = document.getElementById('settingsPanel');
+const notif = document.getElementById('notification');
+const $ = id => document.getElementById(id);
+
+let notifTimer;
+function notify(msg) {
+  notif.textContent = msg;
+  notif.classList.add('show');
+  clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => notif.classList.remove('show'), 3000);
+}
+
+let audioCtx;
+function beep() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [880, 1100, 1320];
+    notes.forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(.4, audioCtx.currentTime + i * .2);
+      gain.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + i * .2 + .3);
+      osc.start(audioCtx.currentTime + i * .2);
+      osc.stop(audioCtx.currentTime + i * .2 + .3);
+    });
+  } catch {}
+}
+
+function updateDisplay() {
+  const m = Math.floor(state.timeLeft / 60);
+  const s = state.timeLeft % 60;
+  display.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const progress = state.total > 0 ? (state.timeLeft / state.total) : 0;
+  progressCircle.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+}
+
+function updateStats() {
+  sessionCount.textContent = state.sessions;
+  totalMin.textContent = state.totalMinutes;
+}
+
+function updateLabel() {
+  const labels = { work: '专注中 ♪', break: '休息中 ♡', long: '长休息 ✿' };
+  const states = { idle: '准备开始 ♪', running: '进行中 ♡', paused: '已暂停 ☆' };
+  statusLabel.textContent = `${labels[state.mode]} · ${states[state.status]}`;
+}
+
+function updateBodyClass() {
+  document.body.className = `mode-${state.mode}`;
+}
+
+function updateActiveTab() {
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.mode === state.mode));
+}
+
+function switchMode(mode) {
+  if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  state.mode = mode;
+  state.status = 'idle';
+  const times = { work: state.settings.work, break: state.settings.break, long: state.settings.longBreak };
+  state.total = Math.max(times[mode], 1) * 60;
+  state.timeLeft = state.total;
+  mainBtn.textContent = '▶';
+  updateDisplay();
+  updateLabel();
+  updateBodyClass();
+  updateActiveTab();
+}
+
+async function tick() {
+  if (state.timeLeft <= 0) {
+    clearInterval(state.timerId);
+    state.timerId = null;
+    state.status = 'idle';
+    mainBtn.textContent = '▶';
+    beep();
+
+    if (state.mode === 'work') {
+      state.sessions++;
+      state.totalMinutes += state.settings.work;
+      state.workSessions++;
+      notify('♥ 番茄完成！休息一下吧 ♥');
+      // Send session to backend (fire and forget)
+      api('/api/sessions', {
+        method: 'POST',
+        body: JSON.stringify({ type: 'work', duration: state.settings.work }),
+      }).catch(() => {});
+      const next = (state.workSessions % state.settings.longBreakInterval === 0) ? 'long' : 'break';
+      switchMode(next);
+      updateStats();
+      startTimer();
+    } else {
+      notify('✦ 休息结束，开始专注！✦');
+      // Send break session to backend
+      const breakType = state.mode === 'long' ? 'long_break' : 'break';
+      api('/api/sessions', {
+        method: 'POST',
+        body: JSON.stringify({ type: breakType, duration: state.settings[state.mode === 'long' ? 'longBreak' : 'break'] }),
+      }).catch(() => {});
+      switchMode('work');
+    }
+    return;
+  }
+  state.timeLeft--;
+  updateDisplay();
+}
+
+function startTimer() {
+  if (state.timerId) return;
+  // Check subscription
+  if (subInfo && subInfo.status === 'expired') {
+    paywallOverlay.classList.remove('hidden');
+    return;
+  }
+  state.status = 'running';
+  mainBtn.textContent = '⏸';
+  updateLabel();
+  state.timerId = setInterval(tick, 1000);
+}
+
+function pauseTimer() {
+  if (!state.timerId) return;
+  clearInterval(state.timerId);
+  state.timerId = null;
+  state.status = 'paused';
+  mainBtn.textContent = '▶';
+  updateLabel();
+}
+
+function resetTimer() {
+  if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  state.status = 'idle';
+  const times = { work: state.settings.work, break: state.settings.break, long: state.settings.longBreak };
+  state.total = Math.max(times[state.mode], 1) * 60;
+  state.timeLeft = state.total;
+  mainBtn.textContent = '▶';
+  updateDisplay();
+  updateLabel();
+}
+
+mainBtn.addEventListener('click', () => {
+  if (state.status === 'idle' || state.status === 'paused') startTimer();
+  else pauseTimer();
+});
+
+resetBtn.addEventListener('click', resetTimer);
+
+skipBtn.addEventListener('click', () => {
+  state.timeLeft = 0;
+  if (state.timerId) {
+    clearInterval(state.timerId);
+    state.timerId = null;
+  }
+  tick();
+});
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    if (state.status === 'running') {
+      if (!confirm('当前有正在进行的番茄，切换模式将中断它，确定吗？')) return;
+    }
+    switchMode(tab.dataset.mode);
+  });
+});
+
+settingsToggle.addEventListener('click', () => {
+  settingsPanel.classList.toggle('open');
+});
+
+function readSettings() {
+  state.settings.work = Math.max(1, parseInt($('workTime').value) || 25);
+  state.settings.break = Math.max(1, parseInt($('breakTime').value) || 5);
+  state.settings.longBreak = Math.max(1, parseInt($('longBreakTime').value) || 15);
+  state.settings.longBreakInterval = Math.max(1, parseInt($('longBreakInterval').value) || 4);
+}
+
+['workTime','breakTime','longBreakTime','longBreakInterval'].forEach(id => {
+  $(id).addEventListener('change', () => {
+    readSettings();
+    if (state.status === 'idle') {
+      const times = { work: state.settings.work, break: state.settings.break, long: state.settings.longBreak };
+      state.total = Math.max(times[state.mode], 1) * 60;
+      state.timeLeft = state.total;
+      updateDisplay();
+    }
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.code === 'Space') { e.preventDefault(); mainBtn.click(); }
+  if (e.code === 'KeyR') { resetTimer(); }
+});
+
+// ── Upgrade link in user bar ──
+upgradeLink.addEventListener('click', () => { paywallOverlay.classList.remove('hidden'); });
+
+// ── Paywall buttons ──
+paywallBack.addEventListener('click', () => { paywallOverlay.classList.add('hidden'); });
+
+// Load QR code images if they exist
+const qrAlipay = document.getElementById('qrcodeAlipay');
+const qrWechat = document.getElementById('qrcodeWechat');
+const paymentNote = document.getElementById('paymentNote');
+const paymentStatus = document.getElementById('paymentStatus');
+const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+
+function loadQRCode(container, path) {
+  const img = new Image();
+  img.onload = () => { container.innerHTML = ''; container.appendChild(img); };
+  img.onerror = () => {}; // keep placeholder
+  img.src = path;
+  img.style.width = '110px';
+  img.style.height = '110px';
+  img.style.display = 'block';
+}
+loadQRCode(qrAlipay, '/qrcode-alipay.png');
+loadQRCode(qrWechat, '/qrcode-wechat.png');
+
+// ── Confirm payment ──
+confirmPaymentBtn.addEventListener('click', async () => {
+  const note = paymentNote.value.trim();
+  if (!note) { paymentStatus.textContent = '请输入付款备注'; return; }
+
+  confirmPaymentBtn.disabled = true;
+  confirmPaymentBtn.textContent = '提交中...';
+  paymentStatus.textContent = '';
+
+  try {
+    await api('/api/subscriptions/confirm-payment', {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    });
+    paymentStatus.textContent = '';
+    paymentStatus.style.color = 'var(--pink-deep)';
+    paymentStatus.textContent = '✓ 申请已提交，请等待管理员确认';
+    confirmPaymentBtn.textContent = '✓ 已提交';
+    paymentNote.disabled = true;
+    // Re-check subscription after a moment
+    setTimeout(() => checkSubscription(false), 2000);
+  } catch (e) {
+    paymentStatus.style.color = 'var(--heart)';
+    paymentStatus.textContent = e.message;
+  } finally {
+    confirmPaymentBtn.disabled = false;
+  }
+});
+
+// ── Subscription check ──
+async function checkSubscription(showPaywall = true) {
+  try {
+    const sub = await api('/api/subscription');
+    subInfo = sub;
+    if (sub.tier === 'premium') {
+      subBanner.className = 'sub-banner premium';
+      subBanner.textContent = '♥ 会员 · 无限使用中 ♥';
+      subBanner.style.display = 'block';
+      paywallOverlay.classList.add('hidden');
+      upgradeLink.style.display = 'none';
+      return true;
+    } else if (sub.status === 'expired') {
+      subBanner.className = 'sub-banner expired';
+      subBanner.textContent = '♡ 免费体验已到期 · 升级会员继续使用 ♡';
+      subBanner.style.display = 'block';
+      upgradeLink.style.display = 'inline';
+      if (showPaywall) paywallOverlay.classList.remove('hidden');
+      return false;
+    } else if (sub.hasPendingRequest) {
+      subBanner.className = 'sub-banner trial';
+      subBanner.innerHTML = `♡ 付款申请已提交，等待管理员确认中...`;
+      subBanner.style.display = 'block';
+      upgradeLink.style.display = 'none';
+      paywallOverlay.classList.add('hidden');
+      return true;
+    } else {
+      // Trial active
+      const d = sub.daysLeft;
+      const dayText = d === 0 ? '今天到期' : `剩余 ${d} 天`;
+      subBanner.className = 'sub-banner trial';
+      subBanner.innerHTML = `♡ 体验版 · ${dayText} · <span class="upgrade-link" id="bannerUpgrade">升级会员</span>`;
+      subBanner.style.display = 'block';
+      upgradeLink.style.display = 'inline';
+      paywallOverlay.classList.add('hidden');
+      return true;
+    }
+  } catch {
+    return true; // allow if can't check
+  }
+}
+
+// Banner upgrade link
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'bannerUpgrade') {
+    paywallOverlay.classList.remove('hidden');
+  }
+});
+
+// ── Auth init ──
+async function onLogin() {
+  userName.textContent = currentUser.username;
+  adminLink.style.display = currentUser.role === 'admin' ? 'inline' : 'none';
+  // Check subscription
+  const active = await checkSubscription(false);
+  // Load stats from server
+  try {
+    const stats = await api('/api/stats');
+    state.sessions = stats.work_sessions;
+    state.totalMinutes = stats.total_minutes;
+  } catch {}
+  updateStats();
+  switchMode('work');
+}
+
+async function init() {
+  if (token) {
+    try {
+      const data = await api('/api/auth/me');
+      currentUser = data.user;
+      authOverlay.classList.add('hidden');
+      await onLogin();
+      // Check subscription with paywall (delay so user sees the app briefly)
+      setTimeout(() => checkSubscription(true), 800);
+      return;
+    } catch {
+      // Token invalid, show login
+      localStorage.removeItem('token');
+      token = null;
+    }
+  }
+  authOverlay.classList.remove('hidden');
+}
+
+// Handle Enter key on auth form
+authPassword.addEventListener('keydown', e => { if (e.key === 'Enter') authBtn.click(); });
+authUsername.addEventListener('keydown', e => { if (e.key === 'Enter') authBtn.click(); });
+
+// Handle upgrade success redirect
+if (window.location.search.includes('upgrade=success')) {
+  // Clean URL
+  window.history.replaceState({}, document.title, window.location.pathname);
+  // Will show premium after init() completes
+}
+
+init();
+</script>
+</body>
+</html>

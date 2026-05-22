@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>♥ 番茄钟管理后台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --pink-light: #FFF0F5;
+    --pink: #FFB6C1;
+    --pink-med: #FF91A4;
+    --pink-dark: #E8708A;
+    --pink-deep: #D4506C;
+    --rose: #C9405C;
+    --white: #FFF5F7;
+    --shadow: rgba(200, 80, 110, 0.2);
+    --pixel: 4px;
+  }
+
+  body {
+    font-family: 'Press Start 2P', monospace;
+    background: var(--pink-light);
+    min-height: 100vh;
+    padding: 32px 16px;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,182,193,.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(255,105,135,.1) 0%, transparent 50%);
+  }
+
+  .pixel-border {
+    border: var(--pixel) solid var(--pink-deep);
+    box-shadow:
+      inset calc(var(--pixel) * -1) calc(var(--pixel) * -1) 0 0 rgba(200, 80, 110, .15),
+      inset var(--pixel) var(--pixel) 0 0 rgba(255, 255, 255, .5),
+      calc(var(--pixel) * 2) calc(var(--pixel) * 2) 0 0 var(--shadow);
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .header h1 {
+    font-size: 18px;
+    color: var(--pink-deep);
+    line-height: 1.8;
+  }
+  .header .sub {
+    font-size: 11px;
+    color: var(--pink-dark);
+    margin-top: 6px;
+  }
+  .header .back-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--pink-dark);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .header .back-link:hover { color: var(--pink-deep); }
+
+  /* Stats cards */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    max-width: 720px;
+    margin: 0 auto 24px;
+  }
+  .stat-card {
+    background: var(--white);
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-card .num {
+    font-size: 22px;
+    color: var(--pink-deep);
+    text-shadow: 2px 2px 0 var(--shadow);
+  }
+  .stat-card .lbl {
+    font-size: 11px;
+    color: var(--pink-dark);
+    margin-top: 8px;
+  }
+
+  /* User table */
+  .table-wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    font-size: 12px;
+  }
+  th, td {
+    padding: 12px 10px;
+    text-align: center;
+    border: var(--pixel) solid var(--pink);
+  }
+  th {
+    background: var(--pink-deep);
+    color: #fff;
+    font-size: 11px;
+  }
+  td {
+    color: var(--pink-dark);
+  }
+  td:first-child { color: var(--pink-deep); }
+
+  /* Auth gate */
+  .auth-gate {
+    max-width: 320px;
+    margin: 80px auto;
+    background: var(--white);
+    padding: 32px 24px;
+    text-align: center;
+  }
+  .auth-gate h2 {
+    font-size: 14px;
+    color: var(--pink-deep);
+    margin-bottom: 6px;
+    line-height: 1.8;
+  }
+  .auth-gate .sub {
+    font-size: 11px;
+    color: var(--pink-dark);
+    margin-bottom: 20px;
+  }
+  .auth-gate input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: var(--pixel) solid var(--pink-dark);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    color: var(--pink-deep);
+    background: #fff;
+    text-align: center;
+    outline: none;
+  }
+  .auth-gate input:focus { background: var(--pink-light); }
+  .auth-gate .btn {
+    width: 100%;
+    padding: 12px;
+    border: var(--pixel) solid var(--pink-dark);
+    background: var(--pink-deep);
+    color: #fff;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .auth-gate .btn:hover { background: var(--rose); }
+  .auth-gate .error {
+    font-size: 11px;
+    color: var(--pink-dark);
+    margin-bottom: 8px;
+    min-height: 18px;
+  }
+
+  .content-area { display: none; }
+  .content-area.show { display: block; }
+
+  .loading {
+    text-align: center;
+    color: var(--pink-dark);
+    font-size: 12px;
+    padding: 40px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>♥</span> 管理后台 <span>♥</span></h1>
+</div>
+
+<!-- Auth gate -->
+<div class="auth-gate pixel-border" id="authGate">
+  <h2>ADMIN LOGIN</h2>
+  <div class="sub">请使用管理员账号登录</div>
+  <div class="error" id="loginError"></div>
+  <input type="text" id="loginUser" placeholder="用户名" autocomplete="username">
+  <input type="password" id="loginPass" placeholder="密码" autocomplete="current-password">
+  <button class="btn" id="loginBtn">登 录</button>
+</div>
+
+<!-- Main content -->
+<div class="content-area" id="contentArea">
+  <div class="header">
+    <div class="sub" id="welcomeMsg"></div>
+    <div class="back-link" id="backLink">← 返回番茄钟</div>
+  </div>
+
+  <!-- Stats cards -->
+  <div class="stats-row" id="statsRow"></div>
+
+  <!-- User table -->
+  <div class="table-wrap pixel-border" style="margin-bottom:24px">
+    <table>
+      <thead>
+        <tr>
+          <th>用户名</th>
+          <th>角色</th>
+          <th>注册时间</th>
+          <th>番茄数</th>
+          <th>专注时长</th>
+        </tr>
+      </thead>
+      <tbody id="userTable"></tbody>
+    </table>
+  </div>
+
+  <!-- Payment requests -->
+  <div class="header" style="margin-bottom:16px">
+    <h1 style="font-size:11px">♥ 付款审核 ♥</h1>
+  </div>
+  <div class="table-wrap pixel-border" id="paymentSection">
+    <table>
+      <thead>
+        <tr>
+          <th>用户名</th>
+          <th>备注</th>
+          <th>申请时间</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="paymentTable">
+        <tr><td colspan="4" style="padding:20px;color:var(--pink-dark);font-size:7px">暂无待处理的付款申请</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const TOKEN_KEY = 'admin_token';
+let token = localStorage.getItem('token');
+let currentUser = null;
+
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...opts.headers };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(path, { ...opts, headers });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || '请求失败');
+  return data;
+}
+
+const authGate = document.getElementById('authGate');
+const contentArea = document.getElementById('contentArea');
+const loginUser = document.getElementById('loginUser');
+const loginPass = document.getElementById('loginPass');
+const loginBtn = document.getElementById('loginBtn');
+const loginError = document.getElementById('loginError');
+const welcomeMsg = document.getElementById('welcomeMsg');
+const statsRow = document.getElementById('statsRow');
+const userTable = document.getElementById('userTable');
+const backLink = document.getElementById('backLink');
+
+backLink.addEventListener('click', () => { window.location.href = '/'; });
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function formatDate(d) {
+  const date = new Date(d + 'Z');
+  return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+async function loadDashboard() {
+  try {
+    const [stats, usersData] = await Promise.all([
+      api('/api/admin/stats'),
+      api('/api/admin/users'),
+    ]);
+
+    statsRow.innerHTML = `
+      <div class="stat-card pixel-border">
+        <div class="num">${stats.total_users}</div>
+        <div class="lbl">♥ 用户数</div>
+      </div>
+      <div class="stat-card pixel-border">
+        <div class="num">${stats.total_sessions}</div>
+        <div class="lbl">✦ 总完成数</div>
+      </div>
+      <div class="stat-card pixel-border">
+        <div class="num">${stats.work_sessions}</div>
+        <div class="lbl">♡ 番茄数</div>
+      </div>
+      <div class="stat-card pixel-border">
+        <div class="num">${stats.total_minutes}</div>
+        <div class="lbl">☆ 总分钟数</div>
+      </div>
+    `;
+
+    userTable.innerHTML = usersData.users.map(u => `
+      <tr>
+        <td>${u.username}</td>
+        <td>${u.role === 'admin' ? '管理员' : '用户'}</td>
+        <td>${formatDate(u.created_at)}</td>
+        <td>${u.total_sessions}</td>
+        <td>${u.total_minutes}</td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    userTable.innerHTML = `<tr><td colspan="5" style="color:var(--heart);padding:20px;">加载失败: ${e.message}</td></tr>`;
+  }
+}
+
+// ── Payment management ──
+const paymentTable = document.getElementById('paymentTable');
+
+async function loadPayments() {
+  try {
+    const data = await api('/api/admin/pending-payments');
+    if (data.payments.length === 0) {
+      paymentTable.innerHTML = `<tr><td colspan="4" style="padding:20px;color:var(--pink-dark);font-size:7px">✅ 暂无待处理的付款申请</td></tr>`;
+      return;
+    }
+    paymentTable.innerHTML = data.payments.map(p => `
+      <tr>
+        <td style="color:var(--pink-deep)">${p.username}</td>
+        <td style="max-width:150px;word-break:break-all">${escHtml(p.note)}</td>
+        <td>${formatDate(p.created_at)}</td>
+        <td>
+          <button class="pay-confirm-btn" data-id="${p.id}" style="padding:6px 12px;border:var(--pixel) solid var(--pink-dark);background:var(--pink-deep);color:#fff;font-family:'Press Start 2P',monospace;font-size:7px;cursor:pointer;margin-right:6px">✓ 确认开通</button>
+          <button class="pay-reject-btn" data-id="${p.id}" style="padding:6px 12px;border:var(--pixel) solid var(--pink-dark);background:var(--white);color:var(--pink-dark);font-family:'Press Start 2P',monospace;font-size:7px;cursor:pointer">✗ 拒绝</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    paymentTable.innerHTML = `<tr><td colspan="4" style="padding:20px;color:var(--heart);font-size:7px">加载失败: ${e.message}</td></tr>`;
+  }
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// Payment action handlers (delegated)
+document.addEventListener('click', async (e) => {
+  const confirmBtn = e.target.closest('.pay-confirm-btn');
+  const rejectBtn = e.target.closest('.pay-reject-btn');
+  if (!confirmBtn && !rejectBtn) return;
+
+  const id = (confirmBtn || rejectBtn).dataset.id;
+  const action = confirmBtn ? 'confirm' : 'reject';
+  const label = action === 'confirm' ? '确认开通' : '拒绝';
+
+  if (!confirm(`确定${label}该付款申请吗？`)) return;
+
+  const btn = confirmBtn || rejectBtn;
+  btn.disabled = true;
+  btn.textContent = '处理中...';
+
+  try {
+    const endpoint = action === 'confirm' ? `/api/admin/confirm-payment/${id}` : `/api/admin/reject-payment/${id}`;
+    const result = await api(endpoint, { method: 'POST' });
+    if (action === 'confirm') {
+      alert(`✅ 已开通会员: ${result.username}`);
+    }
+    loadPayments();
+    loadDashboard(); // Refresh stats
+  } catch (err) {
+    alert('操作失败: ' + err.message);
+    loadPayments();
+  }
+});
+
+loginBtn.addEventListener('click', async () => {
+  const username = loginUser.value.trim();
+  const password = loginPass.value.trim();
+  if (!username || !password) { loginError.textContent = '请填写用户名和密码'; return; }
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = '登录中...';
+  loginError.textContent = '';
+
+  try {
+    const data = await api('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+    if (data.user.role !== 'admin') {
+      loginError.textContent = '该账号不是管理员';
+      loginBtn.disabled = false;
+      loginBtn.textContent = '登 录';
+      return;
+    }
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('token', token);
+    authGate.style.display = 'none';
+    contentArea.classList.add('show');
+    welcomeMsg.textContent = '欢迎回来，' + currentUser.username;
+    loadDashboard();
+    loadPayments();
+  } catch (e) {
+    loginError.textContent = e.message;
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = '登 录';
+  }
+});
+
+loginPass.addEventListener('keydown', e => { if (e.key === 'Enter') loginBtn.click(); });
+loginUser.addEventListener('keydown', e => { if (e.key === 'Enter') loginBtn.click(); });
+
+// Auto-login if token exists
+async function init() {
+  if (token) {
+    try {
+      const data = await api('/api/auth/me');
+      currentUser = data.user;
+      if (currentUser.role === 'admin') {
+        authGate.style.display = 'none';
+        contentArea.classList.add('show');
+        welcomeMsg.textContent = '欢迎回来，' + currentUser.username;
+        loadDashboard();
+        loadPayments();
+        return;
+      }
+    } catch {}
+  }
+}
+
+init();
+</script>
+</body>
+</html>
